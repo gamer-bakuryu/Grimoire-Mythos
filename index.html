@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grimoire-Mythos — Sumário de feitiços</title>
+  <meta name="description" content="Sumário de feitiços de O Grande Grimório da Magia do Mythos de Cthulhu: busque por nome ou filtre por categoria e veja a página correspondente.">
+  <meta name="theme-color" content="#201610">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23201610'/%3E%3Cpath d='M6 32C16 16 48 16 58 32 48 48 16 48 6 32Z' fill='none' stroke='%23c9a35a' stroke-width='3'/%3E%3Ccircle cx='32' cy='32' r='8' fill='%23890e11'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topo">
+    <p class="sobretitulo">Chamado de Cthulhu · 7ª edição</p>
+    <h1>Grimoire-Mythos</h1>
+    <p class="subtitulo">Sumário de feitiços de <em>O Grande Grimório da Magia do Mythos de Cthulhu</em></p>
+    <div class="ornamento" aria-hidden="true"><span></span></div>
+  </header>
+
+  <main>
+    <section class="painel" aria-label="Busca e filtros">
+      <div class="campo">
+        <label for="q">Buscar feitiço</label>
+        <input id="q" type="search" placeholder="Ex.: Contactar, Portal, Yog-Sothoth…" autocomplete="off" spellcheck="false">
+      </div>
+
+      <fieldset class="categorias">
+        <legend>Categorias</legend>
+        <div id="chips" class="chips"></div>
+      </fieldset>
+
+      <div class="opcoes">
+        <label class="check"><input type="checkbox" id="todas"> Exigir todas as categorias marcadas</label>
+        <span class="ordenar">
+          <label for="ordem">Ordenar por</label>
+          <select id="ordem">
+            <option value="az">Nome (A–Z)</option>
+            <option value="pg">Página</option>
+          </select>
+        </span>
+        <button id="limpar" type="button">Limpar filtros</button>
+      </div>
+    </section>
+
+    <section class="folha" aria-labelledby="titulo-sumario">
+      <h2 id="titulo-sumario" class="titulo-sumario">Sumário</h2>
+      <p id="contagem" class="contagem" role="status" aria-live="polite"></p>
+      <div id="resultado"></div>
+      <noscript><p class="vazio">Este sumário precisa de JavaScript para funcionar.</p></noscript>
+    </section>
+  </main>
+
+  <footer class="rodape">
+    <p><strong>Página</strong> é o número da página no leitor de PDF; a página impressa no livro é esse número menos 1.</p>
+    <p>Projeto de fã, sem vínculo com a Chaosium. <em>Chamado de Cthulhu</em> © Chaosium Inc. Este site guarda apenas nomes de feitiços, categorias e números de página — não reproduz o conteúdo do livro.</p>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
