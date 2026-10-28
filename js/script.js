@@ -30,11 +30,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function filterSpells() {
         const searchTerm = searchBox.value.toLowerCase().trim();
-        const selectedCategory = categoryFilter.value;
+        const selectedCategory = categoryFilter.value.toLowerCase().trim();
 
         const filtered = spellsData.filter(spell => {
             const matchesSearch = spell.name.toLowerCase().includes(searchTerm);
-            const matchesCategory = selectedCategory === "" || spell.category === selectedCategory;
+            
+            // Filtro flexível para abranger variações de nomes nas categorias
+            let matchesCategory = true;
+            if (selectedCategory !== "") {
+                const spellCat = spell.category.toLowerCase();
+                if (selectedCategory === "convocação") {
+                    matchesCategory = spellCat.includes("convocação");
+                } else if (selectedCategory === "criação de monstros") {
+                    matchesCategory = spellCat.includes("criação");
+                } else {
+                    matchesCategory = spellCat === selectedCategory;
+                }
+            }
+
             return matchesSearch && matchesCategory;
         });
 
