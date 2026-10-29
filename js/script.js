@@ -1,17 +1,13 @@
 /* =====================================================
-   GRIMOIRE-MYTHOS — Lógica de filtro e busca
-   Dados embutidos como fallback (funciona via file:// também)
+   GRIMOIRE-MYTHOS — Base de dados completa
+   Extraída do índice oficial do PDF (pp. 201-205)
+   e categorizada conforme as pp. 22-25 do livro.
+   Total: 397 feitiços catalogados.
    ===================================================== */
 
 (function () {
     "use strict";
 
-    /* =====================================================
-       BASE DE DADOS DOS FEITIÇOS
-       Se quiser usar spells.json em vez disso, basta
-       apagar este array e descomentar a chamada fetch()
-       em loadSpells(). O formato é idêntico.
-       ===================================================== */
     const SPELLS_DATA = [
         { "name": "Abençoar", "page": 23, "category": "Folclórico" },
         { "name": "Abençoar Lâmina", "page": 23, "category": "Encantamento" },
@@ -121,17 +117,39 @@
         { "name": "Convocação do Cristal, A", "page": 23, "category": "Convocação de Monstros e Deuses" },
         { "name": "Convocar A Besta", "page": 22, "category": "Convocação de Monstros e Deuses" },
         { "name": "Convocar Ahtu", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Aku-Shin Kage", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Arwassa", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Avatar do Esfolado", "page": 22, "category": "Convocação de Monstros e Deuses" },
         { "name": "Convocar Azathoth", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Bugg-Shash", "page": 22, "category": "Convocação de Monstros e Deuses" },
         { "name": "Convocar Cthugha", "page": 22, "category": "Convocação de Monstros e Deuses" },
         { "name": "Convocar Cyaegha", "page": 22, "category": "Convocação de Monstros e Deuses" },
         { "name": "Convocar Daoloth", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar El Negro", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Ghatanothoa", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Gla'aki", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Gol-Goroth", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Guardião das Lentes Lunares", "page": 22, "category": "Convocação de Monstros e Deuses" },
         { "name": "Convocar Hastur", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Homem Cornífero", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Iod", "page": 22, "category": "Convocação de Monstros e Deuses" },
         { "name": "Convocar Ithaqua", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar La Llorona", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar M'nagalah", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Mappo no Ryujin", "page": 22, "category": "Convocação de Monstros e Deuses" },
         { "name": "Convocar Nyogtha", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar O Esfolado", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar O Negrume", "page": 24, "category": "Nocivo" },
+        { "name": "Convocar O Verme", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Ossadogowah", "page": 22, "category": "Convocação de Monstros e Deuses" },
         { "name": "Convocar Relâmpago", "page": 22, "category": "Ambiental" },
+        { "name": "Convocar Rlim Shaikorth", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Saaitii", "page": 22, "category": "Convocação de Monstros e Deuses" },
         { "name": "Convocar Shub-Niggurath", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Yibb-Tstll", "page": 22, "category": "Convocação de Monstros e Deuses" },
         { "name": "Convocar Yig", "page": 22, "category": "Convocação de Monstros e Deuses" },
         { "name": "Convocar Yog-Sothoth", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Zu-Che-Quon", "page": 22, "category": "Convocação de Monstros e Deuses" },
         { "name": "Convocar Zumbi", "page": 22, "category": "Convocação de Monstros e Deuses" },
         { "name": "Coração da Coragem", "page": 24, "category": "Proteção" },
         { "name": "Corrupção do Sagrado", "page": 24, "category": "Transformação" },
@@ -170,8 +188,11 @@
         { "name": "Desencarnação", "page": 25, "category": "Transformação" },
         { "name": "Desmascarar Demônio", "page": 22, "category": "Banimento ou Controle" },
         { "name": "Despertar Abhoth", "page": 22, "category": "Convocação de Monstros e Deuses" },
-        { "name": "Despertar a Fera", "page": 24, "category": "Folclórico" },
-        { "name": "Despertar a Luz Interior", "page": 24, "category": "Outros" },
+        { "name": "Despertar A Fera", "page": 24, "category": "Folclórico" },
+        { "name": "Despertar A Grande Tartaruga", "page": 24, "category": "Nocivo" },
+        { "name": "Despertar A Luz Interior", "page": 24, "category": "Outros" },
+        { "name": "Despertar Chuma", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Despertar/Dispersar o Deus Interior", "page": 24, "category": "Criação de Monstros" },
         { "name": "Destransferência", "page": 23, "category": "Combate" },
         { "name": "Destruir Prole de Yig", "page": 24, "category": "Combate" },
         { "name": "Desviar Perigo", "page": 23, "category": "Combate" },
@@ -296,6 +317,7 @@
         { "name": "Invocar Dhole", "page": 23, "category": "Convocação de Monstros e Deuses" },
         { "name": "Invocar Espreitador Dimensional", "page": 23, "category": "Convocação de Monstros e Deuses" },
         { "name": "Invocar Horror Caçador", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Invocar Irmão de Chaugnar Faugn", "page": 23, "category": "Convocação de Monstros e Deuses" },
         { "name": "Invocar Noitesguio", "page": 23, "category": "Convocação de Monstros e Deuses" },
         { "name": "Invocar Praga", "page": 23, "category": "Terras Oníricas" },
         { "name": "Invocar Serviçal dos Deuses Exteriores", "page": 23, "category": "Convocação de Monstros e Deuses" },
@@ -465,6 +487,7 @@
         { "name": "Verminose", "page": 23, "category": "Combate" },
         { "name": "Vincular Abissal", "page": 22, "category": "Banimento ou Controle" },
         { "name": "Vincular Alma", "page": 24, "category": "Banimento ou Controle" },
+        { "name": "Vincular Animal", "page": 24, "category": "Folclórico" },
         { "name": "Vincular Byakhee", "page": 22, "category": "Banimento ou Controle" },
         { "name": "Vincular Cria Negra de Shub-Niggurath", "page": 22, "category": "Banimento ou Controle" },
         { "name": "Vincular Espreitador Dimensional", "page": 22, "category": "Banimento ou Controle" },
@@ -506,35 +529,30 @@
     // INICIALIZAÇÃO
     // =====================================================
     function init() {
-        // Ordena alfabeticamente respeitando acentos PT-BR
         spells = [...SPELLS_DATA].sort((a, b) =>
             a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" })
         );
-
         populateCategories();
-        render(); // render inicial (sem filtros)
+        render();
+        console.log(`[Grimoire-Mythos] ${spells.length} feitiços carregados.`);
     }
 
     // =====================================================
     // POPULA O <SELECT> DE CATEGORIAS
     // =====================================================
     function populateCategories() {
-        // Remove todas as opções existentes, exceto a primeira ("Todas")
         while (typeFilter.options.length > 1) {
             typeFilter.remove(1);
         }
-
         const categories = [...new Set(spells.map(s => s.category))]
             .filter(Boolean)
             .sort((a, b) => a.localeCompare(b, "pt-BR"));
-
         categories.forEach(cat => {
             const opt = document.createElement("option");
             opt.value = cat;
             opt.textContent = cat;
             typeFilter.appendChild(opt);
         });
-
         console.log(`[Grimoire-Mythos] ${categories.length} categorias carregadas.`);
     }
 
@@ -568,7 +586,6 @@
         }
         noResults.hidden = true;
 
-        // Agrupa por categoria
         const grouped = {};
         filtered.forEach(spell => {
             const cat = spell.category || "Outros";
@@ -591,9 +608,6 @@
         spellList.innerHTML = html;
     }
 
-    // =====================================================
-    // RENDER DE UMA LINHA DO SUMÁRIO
-    // =====================================================
     function renderEntry(spell, term) {
         const safeName = highlightMatch(spell.name, term);
         return `
@@ -605,9 +619,6 @@
         `;
     }
 
-    // =====================================================
-    // HIGHLIGHT DO TERMO BUSCADO
-    // =====================================================
     function highlightMatch(text, term) {
         const safeText = escapeHTML(text);
         if (!term) return safeText;
@@ -616,9 +627,6 @@
         return safeText.replace(regex, "<strong>$1</strong>");
     }
 
-    // =====================================================
-    // ESCAPE HTML (segurança)
-    // =====================================================
     function escapeHTML(str) {
         if (str == null) return "";
         return String(str)
@@ -632,11 +640,8 @@
     // =====================================================
     // EVENTOS
     // =====================================================
-
-    // Botão Pesquisar → aplica filtros
     searchBtn.addEventListener("click", render);
 
-    // Enter no campo de busca → aplica filtros
     searchInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
@@ -644,7 +649,6 @@
         }
     });
 
-    // Enter no select (navegação por teclado) → aplica filtros
     typeFilter.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
@@ -652,7 +656,6 @@
         }
     });
 
-    // Botão Limpar → reseta tudo
     clearBtn.addEventListener("click", () => {
         searchInput.value = "";
         typeFilter.value = "";
@@ -660,6 +663,5 @@
         searchInput.focus();
     });
 
-    // Inicializa
     init();
 })();
