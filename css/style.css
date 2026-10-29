@@ -158,25 +158,100 @@ body {
     box-shadow: 0 0 0 3px rgba(184, 144, 46, 0.25);
 }
 
+/* ============== BOTÕES ============== */
+
+.button-group {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+}
+
+.search-btn,
 .clear-btn {
     font-family: inherit;
     font-size: 0.95rem;
     letter-spacing: 0.05em;
     padding: 0.65rem 1.1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+    white-space: nowrap;
+}
+
+.search-btn {
+    background-color: var(--gold);
+    color: var(--ink);
+    border: 1px solid var(--gold-bright);
+    font-weight: 600;
+}
+
+.search-btn:hover {
+    background-color: var(--gold-bright);
+    box-shadow: 0 0 12px rgba(212, 168, 64, 0.5);
+}
+
+.clear-btn {
     background-color: var(--blood);
     color: var(--parchment);
     border: 1px solid var(--blood-deep);
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s;
 }
 
 .clear-btn:hover {
     background-color: var(--blood-deep);
 }
 
+.search-btn:active,
 .clear-btn:active {
     transform: translateY(1px);
+}
+
+/* Ajuste do grid para acomodar os dois botões */
+@media (max-width: 900px) {
+    .controls {
+        grid-template-columns: 1fr 1fr;
+    }
+    .button-group {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 700px) {
+    body { font-size: 16px; }
+
+    .controls {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+    }
+
+    .button-group {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .search-btn,
+    .clear-btn { width: 100%; }
+
+    .toc { padding: 1rem; }
+
+    .toc-name { max-width: 100%; }
+
+    .toc-entry {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    .toc-dots { display: none; }
+
+    .toc-page {
+        margin-left: auto;
+    }
+
+    .toc-type {
+        flex-basis: 100%;
+        font-size: 0.75rem;
+        opacity: 0.85;
+    }
 }
 
 /* ============== INFO DE RESULTADOS ============== */
