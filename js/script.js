@@ -1,13 +1,500 @@
 /* =====================================================
    GRIMOIRE-MYTHOS — Lógica de filtro e busca
+   Dados embutidos como fallback (funciona via file:// também)
    ===================================================== */
 
 (function () {
     "use strict";
 
-    // Referências DOM
+    /* =====================================================
+       BASE DE DADOS DOS FEITIÇOS
+       Se quiser usar spells.json em vez disso, basta
+       apagar este array e descomentar a chamada fetch()
+       em loadSpells(). O formato é idêntico.
+       ===================================================== */
+    const SPELLS_DATA = [
+        { "name": "Abençoar", "page": 23, "category": "Folclórico" },
+        { "name": "Abençoar Lâmina", "page": 23, "category": "Encantamento" },
+        { "name": "Abençoar/Arruinar Colheita", "page": 24, "category": "Folclórico" },
+        { "name": "Abismo para o Inferno", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Abraço de Nyogtha", "page": 68, "category": "Combate" },
+        { "name": "Abraço de Yog-Sothoth", "page": 24, "category": "Combate" },
+        { "name": "Acelerar", "page": 23, "category": "Transformação" },
+        { "name": "Acelerar a Voz das Profundezas", "page": 25, "category": "Criação de Monstros" },
+        { "name": "Acelerar Cria do Nevoeiro", "page": 24, "category": "Criação de Monstros" },
+        { "name": "Afastar o Olhado", "page": 24, "category": "Proteção" },
+        { "name": "Afogar Mente", "page": 23, "category": "Combate" },
+        { "name": "Afugentar Ninhada", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Água do Bom Ladrão", "page": 24, "category": "Folclórico" },
+        { "name": "Ala Protetora de Anúbis", "page": 24, "category": "Proteção" },
+        { "name": "Alcançar", "page": 25, "category": "Outros" },
+        { "name": "Aleijar/Curar Animal", "page": 24, "category": "Folclórico" },
+        { "name": "Alerta", "page": 24, "category": "Proteção" },
+        { "name": "Alimento da Vida", "page": 24, "category": "Prolongação de Vida" },
+        { "name": "Alma Errante", "page": 24, "category": "Viagem e Transporte" },
+        { "name": "Alterar Clima", "page": 23, "category": "Ambiental" },
+        { "name": "Amaldiçoar", "page": 22, "category": "Folclórico" },
+        { "name": "Amarrar Carne", "page": 23, "category": "Combate" },
+        { "name": "Anátema", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Andarilho da Pele", "page": 24, "category": "Criação de Monstros" },
+        { "name": "Anéis Concêntricos do Verme", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Ângulos Invertidos de Tagh-Clatur", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Animar Monstro de Carne", "page": 24, "category": "Criação de Monstros" },
+        { "name": "Animar Múmia", "page": 24, "category": "Criação de Monstros" },
+        { "name": "Anuviar a Luz", "page": 23, "category": "Ambiental" },
+        { "name": "Aperto de Cthulhu", "page": 125, "category": "Combate" },
+        { "name": "Aprisionar Mente", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Arbusto Humano", "page": 24, "category": "Transformação" },
+        { "name": "Areias da Separação", "page": 23, "category": "Ambiental" },
+        { "name": "Armadilha de Almas", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Armadilha Temporal", "page": 24, "category": "Temporais" },
+        { "name": "Arremesso Deslocador", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Arremesso Impecável", "page": 24, "category": "Folclórico" },
+        { "name": "Ascender a Escadaria da Imortalidade", "page": 28, "category": "Prolongação de Vida" },
+        { "name": "Aspecto Humano", "page": 28, "category": "Transformação" },
+        { "name": "Ativação", "page": 24, "category": "Influenciadores" },
+        { "name": "Atrair Humanos", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Atrair Peixes", "page": 24, "category": "Outros" },
+        { "name": "Augúrio", "page": 24, "category": "Folclórico" },
+        { "name": "Auxiliar Sonhador", "page": 30, "category": "Viagem e Transporte" },
+        { "name": "Bafo da Morte", "page": 23, "category": "Ambiental" },
+        { "name": "Banimento de Yde Etad", "page": 36, "category": "Banimento ou Controle" },
+        { "name": "Banir Apep", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Banir Byatis", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Banir Teu Nome", "page": 24, "category": "Nocivo" },
+        { "name": "Barreira da Dor", "page": 36, "category": "Nocivo" },
+        { "name": "Barreira Oblonga", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Bastião de Throth", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Beatitude", "page": 24, "category": "Proteção" },
+        { "name": "Beijo do Cemitério", "page": 24, "category": "Criação de Monstros" },
+        { "name": "Bênção de Bast", "page": 24, "category": "Outros" },
+        { "name": "Bocarras do Pandemônio", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Buscar o que Foi Perdido", "page": 24, "category": "Folclórico" },
+        { "name": "Caixa Preta", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Caixas-Portal", "page": 120, "category": "Viagem e Transporte" },
+        { "name": "Calor da Mente", "page": 24, "category": "Proteção" },
+        { "name": "Canalizar Deus", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Canção da Alma", "page": 24, "category": "Folclórico" },
+        { "name": "Canção da Sirena", "page": 24, "category": "Folclórico" },
+        { "name": "Canção de Glissande", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Canção de Hastur", "page": 110, "category": "Combate" },
+        { "name": "Cântico da Resistência", "page": 25, "category": "Transformação" },
+        { "name": "Cântico de Poder", "page": 24, "category": "Outros" },
+        { "name": "Cântico de Proteção", "page": 24, "category": "Proteção" },
+        { "name": "Cântico de Thoth", "page": 24, "category": "Outros" },
+        { "name": "Capturar Sonhador", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Carrilhão de Tezchaptl", "page": 24, "category": "Proteção" },
+        { "name": "Cascatas de Florin", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Causar Doença", "page": 24, "category": "Nocivo" },
+        { "name": "Causar/Curar Cegueira", "page": 24, "category": "Nocivo" },
+        { "name": "Cegar a Arma", "page": 24, "category": "Proteção" },
+        { "name": "Chama Cintilante", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Chama Purificadora de Vorvadoss", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Círculo de Náusea", "page": 24, "category": "Proteção" },
+        { "name": "Círculo de Proteção", "page": 24, "category": "Proteção" },
+        { "name": "Clarão de Rá", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Clima Insano", "page": 23, "category": "Ambiental" },
+        { "name": "Colar da Persuasão", "page": 23, "category": "Influenciadores" },
+        { "name": "Comandar Animal", "page": 24, "category": "Folclórico" },
+        { "name": "Comandar Fantasma", "page": 24, "category": "Folclórico" },
+        { "name": "Comandar Plantas", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Comandar Shoggoth", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Comando da Língua Sangrenta", "page": 49, "category": "Transformação" },
+        { "name": "Compelir Carne", "page": 24, "category": "Influenciadores" },
+        { "name": "Compreensão Inefável", "page": 23, "category": "Comunicação" },
+        { "name": "Conceder Karma", "page": 24, "category": "Folclórico" },
+        { "name": "Conceder Vislumbre da Verdade", "page": 24, "category": "Influenciadores" },
+        { "name": "Conjurar Círculo", "page": 24, "category": "Proteção" },
+        { "name": "Conjurar Vidro de Mortlan", "page": 24, "category": "Temporais" },
+        { "name": "Construir Carcosa", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Consumir Memórias", "page": 24, "category": "Outros" },
+        { "name": "Consumir Semblante", "page": 25, "category": "Transformação" },
+        { "name": "Contactar Abhoth", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Contactar Azathoth", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Contactar Cthulhu", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Contactar Nyarlathotep", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Contactar Shub-Niggurath", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Contactar Yog-Sothoth", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Contingência de Eanora", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Controlar a Pele", "page": 25, "category": "Transformação" },
+        { "name": "Controlar Elementos", "page": 23, "category": "Ambiental" },
+        { "name": "Convocação do Cristal, A", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar A Besta", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Ahtu", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Azathoth", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Cthugha", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Cyaegha", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Daoloth", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Hastur", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Ithaqua", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Nyogtha", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Relâmpago", "page": 22, "category": "Ambiental" },
+        { "name": "Convocar Shub-Niggurath", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Yig", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Yog-Sothoth", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Convocar Zumbi", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Coração da Coragem", "page": 24, "category": "Proteção" },
+        { "name": "Corrupção do Sagrado", "page": 24, "category": "Transformação" },
+        { "name": "Cortar Laços de Afeto", "page": 24, "category": "Influenciadores" },
+        { "name": "Cortinas Rendadas de Hish", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Criação da Venerabilidade", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Criar Amuleto", "page": 23, "category": "Encantamento" },
+        { "name": "Criar Apito Amaldiçoado", "page": 23, "category": "Encantamento" },
+        { "name": "Criar Autodefesa", "page": 24, "category": "Proteção" },
+        { "name": "Criar Barreira de Naach-Tith", "page": 24, "category": "Proteção" },
+        { "name": "Criar Bulla", "page": 24, "category": "Folclórico" },
+        { "name": "Criar Fantasma de Ib", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Criar Filho da Esfinge", "page": 24, "category": "Criação de Monstros" },
+        { "name": "Criar Golem", "page": 24, "category": "Criação de Monstros" },
+        { "name": "Criar Janela de Perscrutação", "page": 24, "category": "Temporais" },
+        { "name": "Criar Névoa de R'lyeh", "page": 23, "category": "Ambiental" },
+        { "name": "Criar Pó de Apodrecido", "page": 24, "category": "Proteção" },
+        { "name": "Criar Símbolo de Barzai", "page": 23, "category": "Influenciadores" },
+        { "name": "Criar Tabuleta Amaldiçoada", "page": 23, "category": "Encantamento" },
+        { "name": "Criar Tempestade", "page": 24, "category": "Folclórico" },
+        { "name": "Criar Vara", "page": 23, "category": "Encantamento" },
+        { "name": "Criar Zombi", "page": 24, "category": "Criação de Monstros" },
+        { "name": "Criar Zumbi", "page": 24, "category": "Criação de Monstros" },
+        { "name": "Crux Ansata de Prinn", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Curar", "page": 24, "category": "Folclórico" },
+        { "name": "Dádiva de Inanna", "page": 25, "category": "Transformação" },
+        { "name": "Dádiva dos Mortos", "page": 24, "category": "Nocivo" },
+        { "name": "Dança do Fogo", "page": 23, "category": "Combate" },
+        { "name": "Dança Mental", "page": 24, "category": "Outros" },
+        { "name": "Dardos Esmeralda de Ptath", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Decomposição Verde", "page": 24, "category": "Nocivo" },
+        { "name": "Deflexão", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Deformação Corporal de Gorgoroth", "page": 25, "category": "Transformação" },
+        { "name": "Desafiar a Gravidade", "page": 23, "category": "Ambiental" },
+        { "name": "Desaparecer", "page": 23, "category": "Viagem e Transporte" },
+        { "name": "Desencarnação", "page": 25, "category": "Transformação" },
+        { "name": "Desmascarar Demônio", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Despertar Abhoth", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Despertar a Fera", "page": 24, "category": "Folclórico" },
+        { "name": "Despertar a Luz Interior", "page": 24, "category": "Outros" },
+        { "name": "Destransferência", "page": 23, "category": "Combate" },
+        { "name": "Destruir Prole de Yig", "page": 24, "category": "Combate" },
+        { "name": "Desviar Perigo", "page": 23, "category": "Combate" },
+        { "name": "Detectar Encantamento", "page": 24, "category": "Outros" },
+        { "name": "Devastar", "page": 23, "category": "Combate" },
+        { "name": "Dilacerar o Véu", "page": 24, "category": "Nocivo" },
+        { "name": "Dispersar Divindade", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Dispersar Espírito", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Dissolver a Carne", "page": 24, "category": "Nocivo" },
+        { "name": "Dissolver Esqueleto", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Divinação", "page": 24, "category": "Temporais" },
+        { "name": "Dominação", "page": 23, "category": "Influenciadores" },
+        { "name": "Drenar Juventude", "page": 23, "category": "Combate" },
+        { "name": "Drenar Poder", "page": 24, "category": "Combate" },
+        { "name": "Efígie do Ódio", "page": 24, "category": "Criação de Monstros" },
+        { "name": "Elocução da Bile", "page": 23, "category": "Combate" },
+        { "name": "Encantamento da Má Sorte", "page": 23, "category": "Encantamento" },
+        { "name": "Encantamento do Sexto Sathlatta", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Encantar Adaga de Nyarlathotep", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Amuleto dos Antigos", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Anel", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Animal", "page": 24, "category": "Folclórico" },
+        { "name": "Encantar Apito", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Bengala", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Boneca", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Braseiro", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Cajados Mágicos", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Carne", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Efigie de Animal", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Faca", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Flautas", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Gravação", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Gris-Gris", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Ju-Ju", "page": 24, "category": "Folclórico" },
+        { "name": "Encantar Lança", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Livro", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Paviut", "page": 24, "category": "Folclórico" },
+        { "name": "Encantar Pintura", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Porrete", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Projétil", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Sinos do Horror", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Tabuleta de Pedra", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Tocha", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Vacina", "page": 23, "category": "Encantamento" },
+        { "name": "Encantar Vela", "page": 23, "category": "Folclórico" },
+        { "name": "Encarquilhar", "page": 23, "category": "Combate" },
+        { "name": "Encontrar Portal", "page": 24, "category": "Outros" },
+        { "name": "Encontrar Povo Serpente", "page": 24, "category": "Outros" },
+        { "name": "Encontrar Sonhador", "page": 24, "category": "Terras Oníricas" },
+        { "name": "Enevoar Memória", "page": 24, "category": "Influenciadores" },
+        { "name": "Enevoar Mente", "page": 23, "category": "Influenciadores" },
+        { "name": "Enfeitiçar Vítima", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Engendrar Prosperidade", "page": 24, "category": "Folclórico" },
+        { "name": "Envenenar Sangue", "page": 24, "category": "Folclórico" },
+        { "name": "Enviar Serpente Sagrada", "page": 24, "category": "Nocivo" },
+        { "name": "Enviar Sonho", "page": 23, "category": "Comunicação" },
+        { "name": "Enxertar Carne", "page": 24, "category": "Proteção" },
+        { "name": "Erguer Cadáveres", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Erguer Nevoeiro Noturno", "page": 23, "category": "Ambiental" },
+        { "name": "Erguer o Véu", "page": 24, "category": "Nocivo" },
+        { "name": "Espectro da Rede", "page": 25, "category": "Transformação" },
+        { "name": "Espelho de Tarkhun Atep", "page": 23, "category": "Comunicação" },
+        { "name": "Espiral de Suth", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Estabilidade", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Eviscerador", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Exaltação", "page": 24, "category": "Influenciadores" },
+        { "name": "Exilar Eihort", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Explodir Coração", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Explosão Estupeficante", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Expulsar O Diabo", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Expulsar Shan", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Extensão Oscilante", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Extração de Alma", "page": 24, "category": "Proteção" },
+        { "name": "Falar com A Escuridão que Espreita", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Fardo do Esfolado, O", "page": 24, "category": "Influenciadores" },
+        { "name": "Feitiço de Morte", "page": 23, "category": "Combate" },
+        { "name": "Feitiço que Foi Perdido com Ib", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Fenda Temporal", "page": 23, "category": "Combate" },
+        { "name": "Festim da Coruja", "page": 24, "category": "Folclórico" },
+        { "name": "Festim Final", "page": 24, "category": "Influenciadores" },
+        { "name": "Flamescudo", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Flautas da Loucura", "page": 24, "category": "Nocivo" },
+        { "name": "Fôlego dos Kappa", "page": 25, "category": "Transformação" },
+        { "name": "Folia Dionísica", "page": 24, "category": "Influenciadores" },
+        { "name": "Fome de Kazan", "page": 23, "category": "Ambiental" },
+        { "name": "Forma de Morcego", "page": 24, "category": "Folclórico" },
+        { "name": "Fórmula de Einstein", "page": 24, "category": "Proteção" },
+        { "name": "Fórmula Dho", "page": 24, "category": "Outros" },
+        { "name": "Fornalha de Bolonath", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Funesto Pó de Hermes Trismegisto", "page": 23, "category": "Combate" },
+        { "name": "Fúria", "page": 24, "category": "Folclórico" },
+        { "name": "Gaiola Áurea do Querer", "page": 24, "category": "Influenciadores" },
+        { "name": "Gesto de Proteção", "page": 24, "category": "Proteção" },
+        { "name": "Girodopiante", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Glória do Serafim", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Gorgolejo das Profundezas", "page": 23, "category": "Combate" },
+        { "name": "Graça Elisiana", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Grande Rito de Sacrifício", "page": 24, "category": "Outros" },
+        { "name": "Hibernar", "page": 24, "category": "Influenciadores" },
+        { "name": "Identificar Espírito", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Iluminação Instantânea", "page": 24, "category": "Nocivo" },
+        { "name": "Imortalidade", "page": 24, "category": "Prolongação de Vida" },
+        { "name": "Implantar Medo", "page": 23, "category": "Influenciadores" },
+        { "name": "Inchar", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Incinerar", "page": 23, "category": "Combate" },
+        { "name": "Influência Benevolente", "page": 25, "category": "Transformação" },
+        { "name": "Infundir Conhaque de Phan", "page": 24, "category": "Influenciadores" },
+        { "name": "Infundir Droga de Liao", "page": 24, "category": "Viagem e Transporte" },
+        { "name": "Infundir Droga Onírica", "page": 24, "category": "Viagem e Transporte" },
+        { "name": "Infundir Elixir da Vida", "page": 24, "category": "Criação de Monstros" },
+        { "name": "Infundir Hidromel Espacial (I)", "page": 24, "category": "Viagem e Transporte" },
+        { "name": "Infundir Hidromel Espacial (II)", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Infundir Para-Kete", "page": 24, "category": "Viagem e Transporte" },
+        { "name": "Infundir Paut", "page": 24, "category": "Outros" },
+        { "name": "Infundir Sortilégio Amoroso", "page": 24, "category": "Folclórico" },
+        { "name": "Invocação Espiritual", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Invocar Abissal", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Invocar Baka", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Invocar Byakhee", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Invocar Cria Negra", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Invocar Desh Maior", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Invocar Dhole", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Invocar Espreitador Dimensional", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Invocar Horror Caçador", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Invocar Noitesguio", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Invocar Praga", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Invocar Serviçal dos Deuses Exteriores", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Invocar Shoggoth", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Invocar Vampiro de Fogo", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Invocar Vampiro Estelar", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Involução", "page": 14, "category": "Terras Oníricas" },
+        { "name": "Ira das Eras", "page": 23, "category": "Combate" },
+        { "name": "Ira de Pazzuzu", "page": 23, "category": "Combate" },
+        { "name": "Jornada para o Lado de Lá", "page": 25, "category": "Viagem e Transporte" },
+        { "name": "Ladrão de Almas", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Lamento de Nyhargo", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Lâmina Espectral", "page": 23, "category": "Combate" },
+        { "name": "Lançar as Runas", "page": 24, "category": "Nocivo" },
+        { "name": "Lassidão de Phein", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Lente Solar", "page": 23, "category": "Ambiental" },
+        { "name": "Levitar", "page": 25, "category": "Viagem e Transporte" },
+        { "name": "Libertar Hastur", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Liquefação", "page": 23, "category": "Combate" },
+        { "name": "Loucura Voraz", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Luar", "page": 24, "category": "Outros" },
+        { "name": "Luz da Sagrada Verdade", "page": 23, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Luz de Seker", "page": 24, "category": "Outros" },
+        { "name": "Má Sorte", "page": 23, "category": "Folclórico" },
+        { "name": "Maldição da Casca Pútrida", "page": 24, "category": "Nocivo" },
+        { "name": "Maldição da Coisa-Rato", "page": 24, "category": "Criação de Monstros" },
+        { "name": "Maldição da Pedra", "page": 92, "category": "Combate" },
+        { "name": "Maldição das Trevas", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Maldição de Apophis", "page": 23, "category": "Ambiental" },
+        { "name": "Maldição de Chaugnar Faugn", "page": 24, "category": "Nocivo" },
+        { "name": "Maldição do Declínio", "page": 24, "category": "Nocivo" },
+        { "name": "Maldição Pavorosa de Azathoth", "page": 23, "category": "Combate" },
+        { "name": "Mandrágora", "page": 16, "category": "Terras Oníricas" },
+        { "name": "Manto de Fogo", "page": 23, "category": "Combate" },
+        { "name": "Mãos de Colubra", "page": 23, "category": "Combate" },
+        { "name": "Máscara da Morte", "page": 25, "category": "Transformação" },
+        { "name": "Mau Olhado", "page": 24, "category": "Influenciadores" },
+        { "name": "Meditação Restauradora", "page": 24, "category": "Folclórico" },
+        { "name": "Mente Vazia", "page": 24, "category": "Proteção" },
+        { "name": "Menteférrea", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Mínimo", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Morte de Koshchey", "page": 24, "category": "Prolongação de Vida" },
+        { "name": "Morte Líquida", "page": 23, "category": "Combate" },
+        { "name": "Mover Portal", "page": 25, "category": "Viagem e Transporte" },
+        { "name": "Mundo de Cristal", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Muralha Opaca", "page": 14, "category": "Terras Oníricas" },
+        { "name": "Necrose", "page": 24, "category": "Nocivo" },
+        { "name": "Nefasto Comichão", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Novelo de Ariadne", "page": 24, "category": "Outros" },
+        { "name": "Nulificar Dispositivo", "page": 23, "category": "Encantamento" },
+        { "name": "Numantina", "page": 23, "category": "Combate" },
+        { "name": "Obrigar Liche", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Olhar Interior", "page": 25, "category": "Transformação" },
+        { "name": "Olhar Venenoso", "page": 24, "category": "Nocivo" },
+        { "name": "Olho da Luz e das Trevas", "page": 24, "category": "Proteção" },
+        { "name": "Olho Maldito", "page": 23, "category": "Comunicação" },
+        { "name": "Olhos de um Estranho", "page": 24, "category": "Combate" },
+        { "name": "Olhos do Zumbi", "page": 24, "category": "Transformação" },
+        { "name": "Onda de Calor de Katarien", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Onda do Oblívio", "page": 23, "category": "Ambiental" },
+        { "name": "Onirodispersão", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Ordenhar o Espírito", "page": 24, "category": "Outros" },
+        { "name": "Pacto de Quachil Uttaus", "page": 24, "category": "Prolongação de Vida" },
+        { "name": "Palavras de Poder", "page": 23, "category": "Comunicação" },
+        { "name": "Parar Coração", "page": 24, "category": "Nocivo" },
+        { "name": "Parecer Humano", "page": 25, "category": "Transformação" },
+        { "name": "Parecer Mundano", "page": 25, "category": "Transformação" },
+        { "name": "Passar Despercebido", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Patas do Urso", "page": 24, "category": "Folclórico" },
+        { "name": "Pele de Urso", "page": 24, "category": "Folclórico" },
+        { "name": "Perceber Texto", "page": 24, "category": "Outros" },
+        { "name": "Perda Insidiosa", "page": 24, "category": "Influenciadores" },
+        { "name": "Perfeição", "page": 24, "category": "Outros" },
+        { "name": "Pesadelo", "page": 24, "category": "Influenciadores" },
+        { "name": "Pesadelos", "page": 24, "category": "Influenciadores" },
+        { "name": "Petrificar", "page": 23, "category": "Encantamento" },
+        { "name": "Petrificar Membros Inferiores", "page": 23, "category": "Combate" },
+        { "name": "Pó de Coiote", "page": 24, "category": "Folclórico" },
+        { "name": "Pó de Ibn-Ghazi", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Pó de Suleiman", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Pó Encantado de Anúbis", "page": 23, "category": "Encantamento" },
+        { "name": "Poder de Nyambe", "page": 24, "category": "Outros" },
+        { "name": "Portal", "page": 120, "category": "Viagem e Transporte" },
+        { "name": "Portal da Onirologia", "page": 24, "category": "Viagem e Transporte" },
+        { "name": "Portal do Limbo", "page": 24, "category": "Viagem e Transporte" },
+        { "name": "Portal dos Sonhos", "page": 24, "category": "Viagem e Transporte" },
+        { "name": "Portal Temporal", "page": 24, "category": "Temporais" },
+        { "name": "Possessão", "page": 24, "category": "Prolongação de Vida" },
+        { "name": "Possuir Cadáver", "page": 25, "category": "Transformação" },
+        { "name": "Preparar Cadáver", "page": 24, "category": "Outros" },
+        { "name": "Presa de Yig", "page": 24, "category": "Outros" },
+        { "name": "Produzir Cria de Carne", "page": 24, "category": "Criação de Monstros" },
+        { "name": "Professar o Fim do Dia", "page": 24, "category": "Temporais" },
+        { "name": "Prolongar a Vida", "page": 24, "category": "Prolongação de Vida" },
+        { "name": "Promessa Inefável", "page": 14, "category": "Outros" },
+        { "name": "Proteger a Carne", "page": 24, "category": "Proteção" },
+        { "name": "Punho de Yog-Sothoth", "page": 23, "category": "Combate" },
+        { "name": "Radiestesia", "page": 20, "category": "Folclórico" },
+        { "name": "Raio Impressionante de Malenkamon", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Rajada Argêntea", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Rajada Mental", "page": 23, "category": "Combate" },
+        { "name": "Reanimação", "page": 24, "category": "Criação de Monstros" },
+        { "name": "Recriar Pentagrama Pnakótico", "page": 24, "category": "Proteção" },
+        { "name": "Recriar Símbolo de Koth", "page": 23, "category": "Proteção" },
+        { "name": "Remoção de Favorecimento", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Remortificação", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Repartir o Ka", "page": 24, "category": "Prolongação de Vida" },
+        { "name": "Repelir Shan", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Reprimir Suspeitas", "page": 24, "category": "Transformação" },
+        { "name": "Ressequir Membro", "page": 23, "category": "Combate" },
+        { "name": "Ressurreição", "page": 24, "category": "Criação de Monstros" },
+        { "name": "Retornar Serviçal", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Retorno do Ser Amado", "page": 24, "category": "Criação de Monstros" },
+        { "name": "Reunir e Canalizar Medo", "page": 24, "category": "Influenciadores" },
+        { "name": "Ritual da Momoy", "page": 24, "category": "Outros" },
+        { "name": "Ritual de Saaamaaa", "page": 24, "category": "Proteção" },
+        { "name": "Ritual Purificador", "page": 24, "category": "Outros" },
+        { "name": "Roda de Névoas de Eibon", "page": 24, "category": "Proteção" },
+        { "name": "Roubar o Sangue Vital", "page": 24, "category": "Criação de Monstros" },
+        { "name": "Roubar Vida", "page": 24, "category": "Prolongação de Vida" },
+        { "name": "Roupas Vivas", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Sagacidade dos Iguais", "page": 24, "category": "Outros" },
+        { "name": "Sagrada Muda da Serpente", "page": 24, "category": "Prolongação de Vida" },
+        { "name": "Selar Abismo", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Selo Amarelo do Salto Espiritual", "page": 24, "category": "Folclórico" },
+        { "name": "Selo de Isis", "page": 24, "category": "Proteção" },
+        { "name": "Selo de Nephren-Ka", "page": 24, "category": "Proteção" },
+        { "name": "Sentidos Demoníacos", "page": 25, "category": "Transformação" },
+        { "name": "Sentir Vida", "page": 24, "category": "Outros" },
+        { "name": "Serenidade Terrena", "page": 24, "category": "Folclórico" },
+        { "name": "Serpente de Mnomquah", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Servo Obediente", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Símbolo Amarelo", "page": 24, "category": "Influenciadores" },
+        { "name": "Símbolo Ancestral", "page": 24, "category": "Proteção" },
+        { "name": "Símbolo Vermelho", "page": 23, "category": "Combate" },
+        { "name": "Símbolo Vooriano", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Sintonizar Cristal", "page": 23, "category": "Encantamento" },
+        { "name": "Sombra de Nyarlathotep", "page": 24, "category": "Criação de Monstros" },
+        { "name": "Sono Desperto", "page": 23, "category": "Encantamento" },
+        { "name": "Sopro de Pazzuzu", "page": 23, "category": "Combate" },
+        { "name": "Sugestão Mental", "page": 23, "category": "Influenciadores" },
+        { "name": "Suplicar a Caronte", "page": 22, "category": "Convocação de Monstros e Deuses" },
+        { "name": "Teia Branca de Soren", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Tela Equilateral", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Telepatia", "page": 23, "category": "Comunicação" },
+        { "name": "Terrível Desgraça de Cerrit", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Toque da Decomposição", "page": 24, "category": "Temporais" },
+        { "name": "Tormento da Tumefação", "page": 23, "category": "Combate" },
+        { "name": "Tornar-se Caçador Espectral", "page": 24, "category": "Criação de Monstros" },
+        { "name": "Tornar-se Espectral", "page": 24, "category": "Outros" },
+        { "name": "Transe", "page": 23, "category": "Combate" },
+        { "name": "Transferência Mental", "page": 24, "category": "Prolongação de Vida" },
+        { "name": "Transferir Alma", "page": 24, "category": "Prolongação de Vida" },
+        { "name": "Transferir Órgão", "page": 24, "category": "Prolongação de Vida" },
+        { "name": "Transferir Segmento Corporal", "page": 24, "category": "Prolongação de Vida" },
+        { "name": "Transformação", "page": 22, "category": "Transformação" },
+        { "name": "Trazer Haboob", "page": 23, "category": "Ambiental" },
+        { "name": "Trazer Pestilência (I)", "page": 23, "category": "Nocivo" },
+        { "name": "Trazer Pestilência (II)", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Troca de Mentes", "page": 25, "category": "Transformação" },
+        { "name": "Vazio das Sombras", "page": 23, "category": "Combate" },
+        { "name": "Vela da Comunicação", "page": 13, "category": "Comunicação" },
+        { "name": "Venha a Mim", "page": 24, "category": "Folclórico" },
+        { "name": "Ventos da Desolação", "page": 24, "category": "Folclórico" },
+        { "name": "Ventos Viridianos", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Vermes", "page": 24, "category": "Nocivo" },
+        { "name": "Verminose", "page": 23, "category": "Combate" },
+        { "name": "Vincular Abissal", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Vincular Alma", "page": 24, "category": "Banimento ou Controle" },
+        { "name": "Vincular Byakhee", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Vincular Cria Negra de Shub-Niggurath", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Vincular Espreitador Dimensional", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Vincular Filho da Esfinge", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Vincular Horror Caçador", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Vincular Inimigo", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Vincular Licantropo", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Vincular Noitesguio", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Vincular Serviçal dos Deuses Exteriores", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Vincular Shoggoth", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Vincular Vampiro de Fogo", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Vincular Vampiro Estelar", "page": 22, "category": "Banimento ou Controle" },
+        { "name": "Vínculo Plúmbeo", "page": 24, "category": "Criação de Monstros" },
+        { "name": "Visão Onírica", "page": 24, "category": "Temporais" },
+        { "name": "Vislumbrar o Futuro", "page": 24, "category": "Temporais" },
+        { "name": "Vislumbrar Portal", "page": 24, "category": "Viagem e Transporte" },
+        { "name": "Vocalizar Pensamentos", "page": 23, "category": "Comunicação" },
+        { "name": "Voo", "page": 25, "category": "Viagem e Transporte" },
+        { "name": "Vórtice da Viagem Longínqua", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Voz de Rá", "page": 24, "category": "Influenciadores" },
+        { "name": "X Vivo", "page": 23, "category": "Terras Oníricas" },
+        { "name": "Zimoticismo", "page": 24, "category": "Nocivo" }
+    ];
+
+    // =====================================================
+    // REFERÊNCIAS DOM
+    // =====================================================
     const searchInput = document.getElementById("searchInput");
     const typeFilter  = document.getElementById("typeFilter");
+    const searchBtn   = document.getElementById("searchBtn");
     const clearBtn    = document.getElementById("clearBtn");
     const spellList   = document.getElementById("spellList");
     const resultsInfo = document.getElementById("resultsInfo");
@@ -16,33 +503,27 @@
     let spells = [];
 
     // =====================================================
-    // CARREGAMENTO DOS DADOS
+    // INICIALIZAÇÃO
     // =====================================================
-    async function loadSpells() {
-        try {
-            const response = await fetch("spells.json");
-            if (!response.ok) throw new Error("Falha ao carregar spells.json");
-            spells = await response.json();
+    function init() {
+        // Ordena alfabeticamente respeitando acentos PT-BR
+        spells = [...SPELLS_DATA].sort((a, b) =>
+            a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" })
+        );
 
-            // Ordena alfabeticamente (respeitando acentos PT-BR)
-            spells.sort((a, b) =>
-                a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" })
-            );
-
-            populateCategories();
-            render();
-        } catch (err) {
-            console.error(err);
-            spellList.innerHTML =
-                '<p class="no-results">Erro ao carregar os registros do Grimório. ' +
-                'Verifique se <code>spells.json</code> está na mesma pasta.</p>';
-        }
+        populateCategories();
+        render(); // render inicial (sem filtros)
     }
 
     // =====================================================
-    // POPULA O SELECT DE CATEGORIAS (dinamicamente)
+    // POPULA O <SELECT> DE CATEGORIAS
     // =====================================================
     function populateCategories() {
+        // Remove todas as opções existentes, exceto a primeira ("Todas")
+        while (typeFilter.options.length > 1) {
+            typeFilter.remove(1);
+        }
+
         const categories = [...new Set(spells.map(s => s.category))]
             .filter(Boolean)
             .sort((a, b) => a.localeCompare(b, "pt-BR"));
@@ -53,24 +534,25 @@
             opt.textContent = cat;
             typeFilter.appendChild(opt);
         });
+
+        console.log(`[Grimoire-Mythos] ${categories.length} categorias carregadas.`);
     }
 
     // =====================================================
     // RENDERIZAÇÃO DO SUMÁRIO
     // =====================================================
     function render() {
-        const term = searchInput.value.trim().toLowerCase();
+        const term     = searchInput.value.trim().toLowerCase();
         const category = typeFilter.value;
 
-        // Filtro
         const filtered = spells.filter(spell => {
             const matchesName = spell.name.toLowerCase().includes(term);
             const matchesCat  = !category || spell.category === category;
             return matchesName && matchesCat;
         });
 
-        // Info de resultados
         const total = spells.length;
+
         if (filtered.length === 0) {
             resultsInfo.textContent = `Nenhum registro encontrado em ${total} feitiços catalogados.`;
         } else if (filtered.length === total) {
@@ -79,7 +561,6 @@
             resultsInfo.textContent = `Exibindo ${filtered.length} de ${total} feitiços.`;
         }
 
-        // Estado vazio
         if (filtered.length === 0) {
             spellList.innerHTML = "";
             noResults.hidden = false;
@@ -95,17 +576,15 @@
             grouped[cat].push(spell);
         });
 
-        // Ordena categorias alfabeticamente
         const sortedCats = Object.keys(grouped).sort((a, b) =>
             a.localeCompare(b, "pt-BR")
         );
 
-        // Monta HTML
         let html = "";
         sortedCats.forEach(cat => {
             html += `<h2 class="toc-category">${escapeHTML(cat)}</h2>`;
             grouped[cat].forEach(spell => {
-                html += renderEntry(spell);
+                html += renderEntry(spell, term);
             });
         });
 
@@ -114,10 +593,9 @@
 
     // =====================================================
     // RENDER DE UMA LINHA DO SUMÁRIO
-    // Nome .................. Página
     // =====================================================
-    function renderEntry(spell) {
-        const safeName = highlightMatch(spell.name, searchInput.value.trim());
+    function renderEntry(spell, term) {
+        const safeName = highlightMatch(spell.name, term);
         return `
             <div class="toc-entry" title="Categoria: ${escapeHTML(spell.category || "—")}">
                 <span class="toc-name">${safeName}</span>
@@ -139,7 +617,7 @@
     }
 
     // =====================================================
-    // ESCAPE HTML (segurança contra injeção)
+    // ESCAPE HTML (segurança)
     // =====================================================
     function escapeHTML(str) {
         if (str == null) return "";
@@ -154,8 +632,27 @@
     // =====================================================
     // EVENTOS
     // =====================================================
-    searchInput.addEventListener("input", render);
-    typeFilter.addEventListener("change", render);
+
+    // Botão Pesquisar → aplica filtros
+    searchBtn.addEventListener("click", render);
+
+    // Enter no campo de busca → aplica filtros
+    searchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            render();
+        }
+    });
+
+    // Enter no select (navegação por teclado) → aplica filtros
+    typeFilter.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            render();
+        }
+    });
+
+    // Botão Limpar → reseta tudo
     clearBtn.addEventListener("click", () => {
         searchInput.value = "";
         typeFilter.value = "";
@@ -164,5 +661,5 @@
     });
 
     // Inicializa
-    loadSpells();
+    init();
 })();
