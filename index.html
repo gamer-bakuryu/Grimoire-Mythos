@@ -3,62 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grimoire-Mythos</title>
+    <meta name="description" content="Grimoire-Mythos — Sumário interativo do Grande Grimório da Magia do Mythos de Cthulhu">
+    <title>Grimoire-Mythos · Sumário Interativo</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Importação de fonte similar (EB Garamond) do Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
 </head>
 <body>
+    <header class="site-header">
+        <div class="header-inner">
+            <p class="subtitle-top">Chamado de Cthulhu · 7ª Edição</p>
+            <h1 class="site-title">Grimoire-Mythos</h1>
+            <p class="subtitle-bottom">Sumário Interativo do Grande Grimório da Magia do Mythos</p>
+            <div class="divider">✦ ❖ ✦</div>
+        </div>
+    </header>
 
-    <div class="grimoire-container">
-        <header>
-            <h1>O Grande Grimório da Magia do Mythos</h1>
-            <p class="subtitle">Índice e Filtro de Feitiços — Chamado de Cthulhu 7ª Edição</p>
-        </header>
-
-        <div class="search-filter-box">
-            <div class="input-group">
-                <label for="searchBox">Pesquisar por Nome:</label>
-                <input type="text" id="searchBox" placeholder="Ex: Abraço de Nyogtha...">
+    <main class="container">
+        <section class="controls" aria-label="Filtros de busca">
+            <div class="control-group">
+                <label for="searchInput">Buscar por nome</label>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Ex.: Cthulhu, Portal, Abraço..."
+                    autocomplete="off"
+                    aria-label="Buscar feitiço por nome"
+                >
             </div>
-            <div class="input-group">
-                <label for="categoryFilter">Filtrar por Categoria:</label>
-                <select id="categoryFilter">
+
+            <div class="control-group">
+                <label for="typeFilter">Filtrar por categoria</label>
+                <select id="typeFilter" aria-label="Filtrar feitiços por categoria">
                     <option value="">Todas as Categorias</option>
-                    <option value="Ambientais">Ambientais</option>
-                    <option value="Banimento ou Controle">Banimento ou Controle</option>
-                    <option value="Combate">Combate</option>
-                    <option value="Comunicação">Comunicação</option>
-                    <option value="Convocação">Convocação de Monstros e Deuses</option>
-                    <option value="Criação de Monstros">Criação de Monstros</option>
-                    <option value="Encantamentos">Encantamentos</option>
-                    <option value="Folclórico">Folclórico</option>
-                    <option value="Influenciadores">Influenciadores</option>
-                    <option value="Nocivos">Nocivos</option>
-                    <option value="Proteção">Proteção</option>
-                    <option value="Temporais">Temporais</option>
-                    <option value="Terras Oníricas">Terras Oníricas</option>
-                    <option value="Transformação">Transformação</option>
-                    <option value="Viagem e Transporte">Viagem e Transporte</option>
                 </select>
             </div>
+
+            <button id="clearBtn" class="clear-btn" type="button" title="Limpar filtros">
+                Limpar Filtros
+            </button>
+        </section>
+
+        <div class="results-info" id="resultsInfo" aria-live="polite">
+            <!-- Contador será inserido via JS -->
         </div>
 
-        <main>
-            <div class="sumario-table" id="spellList">
-                <!-- Os itens serão injetados dinamicamente via script.js -->
-            </div>
-            <div id="noResults" class="no-results" style="display: none;">Nenhum feitiço encontrado com os critérios informados.</div>
-        </main>
+        <section class="toc" id="spellList" aria-label="Lista de feitiços">
+            <!-- Feitiços serão inseridos via JS -->
+        </section>
 
-        <footer>
-            <p>Grimoire-Mythos &bull; Baseado no material da Chaosium e Editora NewOrder</p>
-        </footer>
-    </div>
+        <div class="no-results" id="noResults" hidden>
+            <p>✦ Nenhum feitiço encontrado nos registros do Grimório ✦</p>
+            <p class="hint">Tente outro nome ou remova os filtros.</p>
+        </div>
+    </main>
 
-    <script src="spells-data.js"></script>
+    <footer class="site-footer">
+        <p class="footer-motto">In lucem, ita inspiratio. In tenebris secreta sapientiae.</p>
+        <p class="footer-credit">
+            Baseado em <em>O Grande Grimório da Magia do Mythos de Cthulhu</em><br>
+            Mike Mason & Matthew Sanderson · New Order Editora
+        </p>
+        <p class="footer-warn">⚠ A magia do Mythos corrompe. Use com sabedoria, Guardião.</p>
+    </footer>
+
     <script src="script.js"></script>
 </body>
 </html>
